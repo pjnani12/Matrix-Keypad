@@ -1,0 +1,152 @@
+List P= 16F877A
+#include P16F877A.inc
+
+
+
+
+ORG 0X00
+GOTO MAIN
+
+MAIN:
+    BSF STATUS,RP0 ; select bank1
+    BCF STATUS,RP1
+    BCF OPTION_REG,7
+    BCF STATUS,RP0
+	CALL KEYBOARD_CONFIG
+	CALL KEYBOARD
+
+
+KEYBOARD_CONFIG:
+	
+	BANKSEL TRISB
+	MOVLW 0XF0 
+	MOVWF TRISB
+    BANKSEL TRISD
+    MOVLW 0X00   ; output 
+    MOVWF TRISD
+	
+	RETURN
+
+KEYBOARD: ; Keyboard module starts
+	BANKSEL PORTB ; Keyboard connected to portb
+	CLRF PORTB ; clear portb for input and output
+	
+    
+    BANKSEL 0X20
+	MOVLW 0XFF  ; make all bits 1 for checking keypress
+	MOVWF 0X20  ; data memory adress for storing keyboard value
+
+	
+       
+		BTFSS PORTB,3
+     	GOTO KEY_SCAN
+		BTFSS PORTB,2
+        GOTO  KEY_SCAN1
+		BTFSS PORTB,1
+		GOTO KEY_SCAN2
+		BTFSS PORTB,0
+		GOTO KEY_SCAN3
+	    GOTO MAIN
+	
+KEY_SCAN:
+		BANKSEL PORTB
+		CALL ROW_SCAN1
+		BTFSC STATUS,Z   ;Indicates that the result of an arithmetic or logical operation (or, sometimes, a load) was zero
+        GOTO KEYBOARD
+         CALL delay
+         BANKSEL PORTD
+		CLRF PORTD
+        movwf PORTD
+KEY_SCAN1:
+	
+		CALL ROW_SCAN2
+		BTFSC STATUS,Z
+        GOTO KEYBOARD
+         CALL delay
+		 BANKSEL PORTD
+		CLRF PORTD
+        movwf PORTD
+KEY_SCAN2:
+	
+		CALL ROW_SCAN3
+		BTFSC STATUS,Z
+        GOTO KEYBOARD
+         CALL delay
+		BANKSEL PORTD
+	    CLRF PORTD
+        movwf PORTD
+KEY_SCAN3:
+	
+		CALL ROW_SCAN4
+		BTFSC STATUS,Z
+        GOTO KEYBOARD
+         CALL delay
+	    CLRF PORTD
+        movwf PORTD
+
+
+ROW_SCAN1:
+		BTFSS PORTB,4
+		RETLW 0X3F   ; 0
+		BTFSS PORTB,5
+		RETLW 0X66   ; 4
+		BTFSS PORTB,6
+		RETLW 0X7F   ; 8
+		BTFSS PORTB,7
+		RETLW 0X39   ; C
+		RETLW 0X00
+
+ROW_SCAN2:
+		BTFSS PORTB,4
+		RETLW 0X06   ;1
+		BTFSS PORTB,5
+		RETLW 0X6D    ;5
+		BTFSS PORTB,6
+		RETLW 0X6F    ;9
+		BTFSS PORTB,7
+		RETLW 0X3E    ;U
+		RETLW 0X00
+
+ROW_SCAN3:
+		BTFSS PORTB,4
+		RETLW 0X5B   ;2
+		BTFSS PORTB,5
+		RETLW 0X7D    ;6
+		BTFSS PORTB,6
+		RETLW 0X77    ;A
+		BTFSS PORTB,7
+		RETLW 0X79   ;E
+		RETLW 0X00
+
+ROW_SCAN4:
+		BTFSS PORTB,4
+		RETLW 0X4F   ;3
+		BTFSS PORTB,5
+		RETLW 0X07    ;7 
+		BTFSS PORTB,6
+		RETLW 0X40   ; -
+		BTFSS PORTB,7
+		RETLW 0X71   ; F
+		RETLW 0X00
+
+
+
+delay
+        MOVLW 0X05
+       MOVWF 0X50
+       M4:
+       MOVLW 0XFF
+       MOVWF 0X55
+       M3:
+       MOVLW 0XFF
+       MOVWF 0X60
+       M2:
+       DECFSZ 0X60
+       GOTO M2
+       DECFSZ 0X55
+       GOTO M3
+       DECFSZ 0X50
+       GOTO M4
+       RETURN 
+
+END
